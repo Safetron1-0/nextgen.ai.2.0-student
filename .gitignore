@@ -1,0 +1,42 @@
+﻿# Root gitignore for NextGen AI Portal
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node modules / package files
+node_modules/
+dist/
+build/
+.npm
+/frontend/node_modules/
+/frontend/dist/
+
+# Python Virtual Env and caches
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.local
+.env.*.local
+
+# Spring Boot build files
+/backend/.gradle/
+/backend/build/
+/backend/target/
+/backend/bin/
+/backend/out/
+
+# Database directories
+/ai-service/chroma_db/
+/ai-service/venv/
+/ai-service/__pycache__/
+/ai-service/.env
