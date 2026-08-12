@@ -37,7 +37,13 @@ app = FastAPI(
 # Allow requests from the React frontend (port 5173 by default)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:4173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:4173",
+        "https://nextgenai20.netlify.app",
+        "https://*.netlify.app",  # covers deploy previews too
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
