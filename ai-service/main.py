@@ -34,7 +34,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Allow requests from the React frontend (port 5173 by default)
+# Allow requests from the React frontend (port 5173 by default) and
+# any Netlify deploy (production + previews).
+#
+# NOTE: `allow_origins` only does EXACT string matching — a literal
+# "https://*.netlify.app" entry there never matches anything, it's not
+# a real wildcard. Use `allow_origin_regex` for that instead; Starlette
+# checks both lists, so exact entries below still apply too.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -42,8 +48,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:4173",
         "https://nextgenai20.netlify.app",
-        "https://*.netlify.app",  # covers deploy previews too
     ],
+    allow_origin_regex=r"https://.*\.netlify\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
