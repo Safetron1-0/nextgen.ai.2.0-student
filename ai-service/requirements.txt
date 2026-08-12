@@ -8,3 +8,4 @@ langchain-chroma
 langchain-community
 python-dotenv
 pydantic
+langchain-groq
