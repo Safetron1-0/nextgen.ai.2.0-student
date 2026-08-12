@@ -3,7 +3,9 @@ student_rag.py
 RAG pipeline: converts student data into text chunks, stores them in ChromaDB
 (persistent, per-student collection), and retrieves relevant context for queries.
 
-Uses Ollama's nomic-embed-text model for generating embeddings locally.
+Uses a local HuggingFace sentence-transformers model (all-MiniLM-L6-v2) for
+generating embeddings. This runs directly inside the service's own process —
+no external embedding server (like Ollama) is required.
 """
 
 import os
@@ -11,23 +13,31 @@ from typing import List
 from dotenv import load_dotenv
 
 import chromadb
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 load_dotenv()
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+# Small, fast, CPU-friendly embedding model (~80MB). Runs locally in-process.
+EMBED_MODEL_NAME = os.getenv("EMBED_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
+
+# Cache the embeddings object so the model is loaded into memory only once
+# per process, not on every request.
+_embeddings_instance = None
 
 
 def get_embeddings():
-    """Returns the Ollama embedding function (nomic-embed-text)."""
-    return OllamaEmbeddings(
-        model=OLLAMA_EMBED_MODEL,
-        base_url=OLLAMA_BASE_URL,
-    )
+    """Returns a locally-run HuggingFace embedding function (all-MiniLM-L6-v2)."""
+    global _embeddings_instance
+    if _embeddings_instance is None:
+        _embeddings_instance = HuggingFaceEmbeddings(
+            model_name=EMBED_MODEL_NAME,
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+    return _embeddings_instance
 
 
 def get_vectorstore(username: str) -> Chroma:
