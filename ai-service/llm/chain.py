@@ -1,17 +1,18 @@
 """
 chain.py
-LLM reasoning chain using Ollama (llama3.1:8b) via LangChain.
+LLM reasoning chain using Groq (hosted, llama-3.1-8b-instant) via LangChain.
 
 Pipeline:
   0a. Privacy guard  — block any query asking about OTHER students
   0b. Relevance guard — reject questions unrelated to placement/academics/careers
   1.  Build a rich, student-personalized system prompt from their live DB data
   2.  Inject retrieved RAG context (their specific applications, companies, resources)
-  3.  Call the local Ollama model (fully local, NO API key required)
+  3.  Call the hosted Groq model (requires GROQ_API_KEY)
   4.  Parse out the reasoning steps and the final answer separately
   5.  (Optional streaming) stream_llm() yields tokens progressively via SSE
 
-NOTE: This service uses Ollama running locally — no external API key is needed.
+NOTE: This service uses Groq's hosted API — requires GROQ_API_KEY to be set
+as an environment variable. Get a free key at https://console.groq.com
 
 PRIVACY MODEL:
   Each request carries { username, token } which are forwarded to Spring Boot.
@@ -26,13 +27,13 @@ import os
 import re
 from typing import AsyncGenerator
 from dotenv import load_dotenv
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 # ─────────────────────────────────────────────────────────────
 # PLACEMENT-DOMAIN RELEVANCE GUARD
@@ -129,11 +130,11 @@ def is_asking_about_other_student(query: str) -> bool:
     return False
 
 
-def get_llm() -> ChatOllama:
-    """Returns a configured ChatOllama instance. No API key needed — fully local via Ollama."""
-    return ChatOllama(
-        model=OLLAMA_MODEL,
-        base_url=OLLAMA_BASE_URL,
+def get_llm() -> ChatGroq:
+    """Returns a configured ChatGroq instance for production (hosted, requires GROQ_API_KEY)."""
+    return ChatGroq(
+        model=GROQ_MODEL,
+        api_key=GROQ_API_KEY,
         temperature=0.65,
     )
 
@@ -309,7 +310,7 @@ async def call_llm(profile: dict, context: dict, retrieved_context: str, query: 
     Step 0a: Privacy guard  — block cross-student queries immediately.
     Step 0b: Relevance guard — reject off-topic questions immediately (no LLM call).
     Step 1:  Build personalized system prompt from live student data.
-    Step 2:  Call Ollama (local, no API key required).
+    Step 2:  Call Groq (hosted, requires GROQ_API_KEY).
     Step 3:  Parse and return response.
 
     Args:
@@ -368,8 +369,7 @@ async def call_llm(profile: dict, context: dict, retrieved_context: str, query: 
             "reasoning": "",
             "answer": (
                 f"I encountered an error processing your query. "
-                f"Please ensure Ollama is running with the `{OLLAMA_MODEL}` model. "
-                f"Run: `ollama pull {OLLAMA_MODEL}`"
+                f"Please check that GROQ_API_KEY is set correctly for the `{GROQ_MODEL}` model."
             ),
             "raw": str(e),
             "rejected": False,
