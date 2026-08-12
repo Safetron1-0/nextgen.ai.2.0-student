@@ -3,7 +3,8 @@ uvicorn[standard]
 httpx
 chromadb
 langchain
-langchain-ollama
+langchain-huggingface
+sentence-transformers
 langchain-chroma
 langchain-community
 python-dotenv
