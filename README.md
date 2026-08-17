@@ -171,5 +171,3 @@ JWT-based auth via Spring Security, with BCrypt password hashing. The frontend a
 - [ ] Email/SMS notification integrations
 
 
-## 📄 License
-Add your license here (e.g., MIT).
